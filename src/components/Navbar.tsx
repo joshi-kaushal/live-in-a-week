@@ -16,7 +16,7 @@ export default function Navbar({ currentDate, previousWeek, nextWeek }: NavbarPr
 		return Math.floor((pastDaysOfYear + startOfYear.getDay() + 1) / 7);
 	};
 
-	const weekNumber = getWeekNumber(currentDate)
+	const weekNumber = getWeekNumber(currentDate) + 1
 	return (
 		<div className="flex items-center justify-between mb-4">
 			<div className="flex flex-col gap-1 lg:flex-row lg:gap-4 lg:items-center">
