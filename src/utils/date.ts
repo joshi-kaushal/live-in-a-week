@@ -16,6 +16,13 @@ export function formatInputDate(date: Date): string {
 }
 
 /**
+ * Format date for input value (YYYY-MM-DD) - alias
+ */
+export function formatDateForInput(date: Date): string {
+  return format(date, 'yyyy-MM-dd');
+}
+
+/**
  * Get week boundaries for a given date
  */
 export function getWeekBoundaries(date: Date): { start: Date; end: Date } {

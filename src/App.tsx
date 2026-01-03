@@ -1,7 +1,10 @@
-"use client"
-
-import WeeklyCalendar from "./components/Container";
+import { Layout } from "./components/Layout";
+import { WeekView } from "./components/views/WeekView";
 
 export default function App() {
-  return <WeeklyCalendar />;
+  return (
+    <Layout>
+      <WeekView />
+    </Layout>
+  );
 }
