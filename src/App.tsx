@@ -49,19 +49,33 @@ function AppWithShortcuts(props: {
   const { focusedDate, setFocusedDate } = useUIState();
 
   const handlePrevDay = useCallback(() => {
-    const prev = format(addDays(new Date(focusedDate || new Date()), -1), 'yyyy-MM-dd');
-    setFocusedDate(prev);
-  }, [focusedDate, setFocusedDate]);
+    const current = focusedDate ? new Date(focusedDate + 'T00:00:00') : new Date();
+    const prev = addDays(current, -1);
+    const prevStr = format(prev, 'yyyy-MM-dd');
+    setFocusedDate(prevStr);
+    // If the new date is before the current weekStart, flip to previous week
+    if (prev < props.weekStart) {
+      props.onPrevWeek();
+    }
+  }, [focusedDate, setFocusedDate, props]);
 
   const handleNextDay = useCallback(() => {
-    const next = format(addDays(new Date(focusedDate || new Date()), 1), 'yyyy-MM-dd');
-    setFocusedDate(next);
-  }, [focusedDate, setFocusedDate]);
+    const current = focusedDate ? new Date(focusedDate + 'T00:00:00') : new Date();
+    const next = addDays(current, 1);
+    const nextStr = format(next, 'yyyy-MM-dd');
+    setFocusedDate(nextStr);
+    // If the new date is past the end of the current week (weekStart + 6), flip to next week
+    const weekEnd = addDays(props.weekStart, 6);
+    if (next > weekEnd) {
+      props.onNextWeek();
+    }
+  }, [focusedDate, setFocusedDate, props]);
 
   const handleTodayFull = useCallback(() => {
     props.onToday();
     setFocusedDate(format(new Date(), 'yyyy-MM-dd'));
   }, [props, setFocusedDate]);
+
 
   // Signal to WeekView to open inline add in focused column
   const [triggerNewTask, setTriggerNewTask] = useState(0);
