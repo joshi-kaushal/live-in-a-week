@@ -20,6 +20,7 @@ export const useTaskStore = create<TaskStoreState & {
   addTask: (title: string, dueDate?: string, energyLevel?: Task['energyLevel']) => Promise<Task>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
+  duplicateTask: (taskId: string) => Promise<Task>;
   toggleTaskComplete: (taskId: string) => Promise<void>;
   moveTaskToDate: (taskId: string, newDate: string) => Promise<void>;
   
@@ -146,6 +147,36 @@ export const useTaskStore = create<TaskStoreState & {
             status: isCompleting ? 'completed' : 'pending',
             completedAt: isCompleting ? new Date().toISOString() : undefined,
           });
+        },
+
+        duplicateTask: async (taskId: string) => {
+          const task = get().getTask(taskId);
+          if (!task) {
+            get().showNotification('Task not found', 'error');
+            throw new Error('Task not found');
+          }
+
+          const duplicate: Task = {
+            ...task,
+            id: uuidv4(),
+            status: 'pending',
+            completedAt: undefined,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            localVersion: 1,
+            syncStatus: 'pending',
+          };
+
+          await saveTask(duplicate);
+
+          set((state) => {
+            const newTasks = new Map(state.tasks);
+            newTasks.set(duplicate.id, duplicate);
+            return { tasks: newTasks };
+          });
+
+          get().showNotification(`"${task.title}" duplicated`, 'success', 2500);
+          return duplicate;
         },
 
         moveTaskToDate: async (taskId: string, newDate: string) => {

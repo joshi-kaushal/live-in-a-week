@@ -91,6 +91,7 @@ export const useTaskActions = () => {
   const addTask = useTaskStore((state) => state.addTask);
   const updateTask = useTaskStore((state) => state.updateTask);
   const deleteTask = useTaskStore((state) => state.deleteTask);
+  const duplicateTask = useTaskStore((state) => state.duplicateTask);
   const toggleComplete = useTaskStore((state) => state.toggleTaskComplete);
   const moveTaskToDate = useTaskStore((state) => state.moveTaskToDate);
   const createRecurringTask = useTaskStore((state) => state.createRecurringTask);
@@ -101,12 +102,13 @@ export const useTaskActions = () => {
       addTask,
       updateTask,
       deleteTask,
+      duplicateTask,
       toggleComplete,
       moveTaskToDate,
       createRecurringTask,
       deleteRecurringTask,
     }),
-    [addTask, updateTask, deleteTask, toggleComplete, moveTaskToDate, createRecurringTask, deleteRecurringTask]
+    [addTask, updateTask, deleteTask, duplicateTask, toggleComplete, moveTaskToDate, createRecurringTask, deleteRecurringTask]
   );
 };
 

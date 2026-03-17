@@ -2,7 +2,7 @@ import { FC } from 'react';
 import { Task } from '../../types/task';
 import { useTaskActions } from '../../store/hooks';
 import { getEnergyLevelDisplay } from '../../utils/formatters';
-import { Trash2, Check, Circle } from 'lucide-react';
+import { Trash2, Check, Circle, Copy } from 'lucide-react';
 
 interface TaskCardProps {
   task: Task;
@@ -11,7 +11,7 @@ interface TaskCardProps {
 }
 
 export const TaskCard: FC<TaskCardProps> = ({ task, onEdit, isDragging = false }) => {
-  const { toggleComplete, deleteTask } = useTaskActions();
+  const { toggleComplete, deleteTask, duplicateTask } = useTaskActions();
   const isCompleted = task.status === 'completed';
 
   const priorityClass =
@@ -31,6 +31,11 @@ export const TaskCard: FC<TaskCardProps> = ({ task, onEdit, isDragging = false }
     if (window.confirm(`Delete "${task.title}"?`)) {
       deleteTask(task.id);
     }
+  };
+
+  const handleDuplicate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    duplicateTask(task.id);
   };
 
   return (
@@ -74,7 +79,10 @@ export const TaskCard: FC<TaskCardProps> = ({ task, onEdit, isDragging = false }
         </div>
       </div>
 
-      {/* Delete */}
+      {/* Actions */}
+      <button className="task-duplicate-btn" onClick={handleDuplicate} aria-label="Duplicate task" title="Duplicate (Shift+D)">
+        <Copy size={13} />
+      </button>
       <button className="task-delete-btn" onClick={handleDelete} aria-label="Delete task">
         <Trash2 size={13} />
       </button>

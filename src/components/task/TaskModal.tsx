@@ -6,6 +6,7 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Copy } from 'lucide-react';
 
 interface TaskModalProps {
   task: Task | null;
@@ -14,7 +15,7 @@ interface TaskModalProps {
 }
 
 export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
-  const { updateTask } = useTaskActions();
+  const { updateTask, duplicateTask } = useTaskActions();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -23,6 +24,7 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
   const [energyLevel, setEnergyLevel] = useState<Task['energyLevel']>('medium');
   const [priority, setPriority] = useState<Task['priority']>('medium');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
 
   useEffect(() => {
     if (task) {
@@ -63,6 +65,17 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
 
   const handleClose = () => {
     onClose();
+  };
+
+  const handleDuplicate = async () => {
+    if (!task) return;
+    setIsDuplicating(true);
+    try {
+      await duplicateTask(task.id);
+      onClose();
+    } finally {
+      setIsDuplicating(false);
+    }
   };
 
   if (!task) return null;
@@ -187,18 +200,30 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
           )}
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
+          <div className="flex justify-between gap-2 pt-4 border-t">
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={isSubmitting || isDuplicating}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleDuplicate}
+                disabled={isSubmitting || isDuplicating}
+                title="Duplicate this task (Shift+D)"
+              >
+                <Copy size={14} className="mr-1.5" />
+                {isDuplicating ? 'Duplicating…' : 'Duplicate'}
+              </Button>
+            </div>
             <Button
               type="submit"
-              disabled={!title.trim() || isSubmitting}
+              disabled={!title.trim() || isSubmitting || isDuplicating}
             >
               {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>

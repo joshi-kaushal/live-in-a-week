@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Live in a Week",
+  "short_name": "Live in a Week",
+  "version": "1.0.0",
+  "description": "Your weekly planner — always one tab away.",
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "permissions": ["storage"],
+  "icons": {
+    "16":  "icons/icon16.png",
+    "48":  "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

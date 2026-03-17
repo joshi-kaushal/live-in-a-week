@@ -6,6 +6,7 @@ import Navbar from './components/Navbar';
 import { ShortcutsHelp } from './components/common/ShortcutsHelp';
 import { useUIState } from './store/hooks';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useTaskStore } from './store/taskStore';
 
 export default function App() {
   const [weekStart, setWeekStart] = useState(() =>
@@ -46,7 +47,8 @@ function AppWithShortcuts(props: {
   onShowHelp: () => void;
   onHideHelp: () => void;
 }) {
-  const { focusedDate, setFocusedDate } = useUIState();
+  const { focusedDate, setFocusedDate, selectedTaskId } = useUIState();
+  const duplicateTask = useTaskStore((state) => state.duplicateTask);
 
   const handlePrevDay = useCallback(() => {
     const current = focusedDate ? new Date(focusedDate + 'T00:00:00') : new Date();
@@ -83,6 +85,12 @@ function AppWithShortcuts(props: {
     setTriggerNewTask((n) => n + 1);
   }, []);
 
+  const handleDuplicateTask = useCallback(() => {
+    if (selectedTaskId) {
+      duplicateTask(selectedTaskId);
+    }
+  }, [selectedTaskId, duplicateTask]);
+
   useKeyboardShortcuts({
     onCommandPalette: () => { }, // handled via CommandPalette component itself
     onPrevWeek: props.onPrevWeek,
@@ -91,6 +99,7 @@ function AppWithShortcuts(props: {
     onNextDay: handleNextDay,
     onToday: handleTodayFull,
     onNewTask: handleNewTask,
+    onDuplicateTask: handleDuplicateTask,
     onHelp: props.onShowHelp,
     onEscape: props.onHideHelp,
   });

@@ -332,12 +332,14 @@
 .day-tasks {
   flex: 1;
   overflow-y: auto;
-  overflow-x: hidden;  /* prevents input from inflating column width */
+  overflow-x: hidden;
+  /* prevents input from inflating column width */
   padding: 8px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 0;        /* critical: lets flex children shrink below content size */
+  min-width: 0;
+  /* critical: lets flex children shrink below content size */
 }
 
 .day-tasks::-webkit-scrollbar {
@@ -480,7 +482,8 @@
   color: #2563eb;
 }
 
-.task-delete-btn {
+.task-delete-btn,
+.task-duplicate-btn {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -496,13 +499,19 @@
   transition: all 0.12s ease;
 }
 
-.task-card:hover .task-delete-btn {
+.task-card:hover .task-delete-btn,
+.task-card:hover .task-duplicate-btn {
   opacity: 1;
 }
 
 .task-delete-btn:hover {
   color: #ef4444;
   background: #fef2f2;
+}
+
+.task-duplicate-btn:hover {
+  color: #4f46e5;
+  background: #eef2ff;
 }
 
 /* ── Bottom Section (Backlog + Someday) ─────────────────────── */
@@ -602,7 +611,8 @@
 /* ── Inline Task Input ──────────────────────────────────────── */
 .inline-task-input {
   width: 100%;
-  min-width: 0;          /* prevents flex width blowout */
+  min-width: 0;
+  /* prevents flex width blowout */
   box-sizing: border-box;
   padding: 7px 10px;
   font-size: 13px;
@@ -654,6 +664,7 @@
   color: var(--text-muted);
   border-color: transparent;
 }
+
 .nav-btn--help:hover {
   color: #4f46e5;
   background: #eef2ff;
@@ -662,7 +673,8 @@
 
 /* ── Mobile Day Strip ───────────────────────────────────────── */
 .mobile-day-strip {
-  display: none; /* only shown on mobile via media query */
+  display: none;
+  /* only shown on mobile via media query */
   flex-shrink: 0;
   overflow-x: auto;
   padding: 8px 12px;
@@ -671,7 +683,10 @@
   background: white;
   scrollbar-width: none;
 }
-.mobile-day-strip::-webkit-scrollbar { display: none; }
+
+.mobile-day-strip::-webkit-scrollbar {
+  display: none;
+}
 
 .mobile-day-pill {
   display: flex;
@@ -714,8 +729,13 @@
   line-height: 1;
 }
 
-.mobile-day-pill--active .mobile-day-label { color: #4f46e5; }
-.mobile-day-pill--active .mobile-day-num   { color: #4f46e5; }
+.mobile-day-pill--active .mobile-day-label {
+  color: #4f46e5;
+}
+
+.mobile-day-pill--active .mobile-day-num {
+  color: #4f46e5;
+}
 
 /* ── Responsive Breakpoints ─────────────────────────────────── */
 
@@ -724,10 +744,12 @@
   .week-grid {
     grid-template-columns: repeat(4, 1fr);
   }
+
   /* Show Mon–Thu, hide Fri/Sat/Sun on tablet */
   .day-column:nth-child(n+5) {
     display: none;
   }
+
   .navbar-week-range,
   .navbar-week-num {
     display: none;
@@ -737,7 +759,8 @@
 /* Mobile: < 640px → single column day view */
 @media (max-width: 639px) {
   .mobile-day-strip {
-    display: flex; /* show the day strip */
+    display: flex;
+    /* show the day strip */
   }
 
   .week-grid {
@@ -748,6 +771,7 @@
   .day-column--mobile-hidden {
     display: none;
   }
+
   /* show all on desktop (override) */
   .day-column {
     border-right: none;
@@ -770,9 +794,19 @@
     max-height: 30vh;
   }
 
-  .navbar-month { font-size: 13px; }
-  .navbar-center { gap: 6px; }
-  .brand-name { display: none; } /* hide on very small screens */
+  .navbar-month {
+    font-size: 13px;
+  }
+
+  .navbar-center {
+    gap: 6px;
+  }
+
+  .brand-name {
+    display: none;
+  }
+
+  /* hide on very small screens */
 }
 
 /* ── Shortcuts Overlay ──────────────────────────────────────── */
@@ -789,8 +823,13 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .shortcuts-panel {
@@ -804,8 +843,15 @@
 }
 
 @keyframes slideUp {
-  from { transform: translateY(12px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .shortcuts-header {
@@ -836,6 +882,7 @@
   cursor: pointer;
   transition: all 0.12s;
 }
+
 .shortcuts-close:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
@@ -867,7 +914,10 @@
   padding: 7px 20px;
   transition: background 0.1s;
 }
-.shortcuts-row:hover { background: var(--bg-hover); }
+
+.shortcuts-row:hover {
+  background: var(--bg-hover);
+}
 
 .shortcuts-desc {
   font-size: 13px;
@@ -913,6 +963,15 @@
 }
 
 /* ── Scrollbar utility ──────────────────────────────────────── */
-.custom-scrollbar::-webkit-scrollbar { width: 4px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border-column); border-radius: 2px; }
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border-column);
+  border-radius: 2px;
+}

@@ -11,6 +11,7 @@ interface KeyboardShortcutsConfig {
   onPrevWeek?: () => void;       // Ctrl+←
   onNextWeek?: () => void;       // Ctrl+→
   onCompleteTask?: () => void;
+  onDuplicateTask?: () => void;  // Shift+D
   onDeleteTask?: () => void;
   onEscape?: () => void;
   onHelp?: () => void;           // ?
@@ -56,6 +57,9 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig = {}) {
         } else if (matchesShortcut(event, SHORTCUTS.COMPLETE_TASK)) {
           event.preventDefault();
           config.onCompleteTask?.();
+        } else if (matchesShortcut(event, SHORTCUTS.DUPLICATE_TASK)) {
+          event.preventDefault();
+          config.onDuplicateTask?.();
         } else if (matchesShortcut(event, SHORTCUTS.DELETE_TASK)) {
           event.preventDefault();
           config.onDeleteTask?.();
