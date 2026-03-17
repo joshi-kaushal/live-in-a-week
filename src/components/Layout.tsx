@@ -7,23 +7,27 @@ import { useTaskStore } from '../store/taskStore';
 
 interface LayoutProps {
   children: ReactNode;
+  navbar: ReactNode;
 }
 
-export const Layout: FC<LayoutProps> = ({ children }) => {
+export const Layout: FC<LayoutProps> = ({ children, navbar }) => {
   const initializeStore = useTaskStore((state) => state.initializeStore);
 
-  // Initialize store from IndexedDB on mount
   useEffect(() => {
     initializeStore();
   }, [initializeStore]);
 
-  // Setup global keyboard shortcuts
   useKeyboardShortcuts();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 max-w-7xl">
+    <div className="app-shell">
+      {/* Sticky Top Navbar */}
+      <header className="app-navbar">
+        {navbar}
+      </header>
+
+      {/* Full-width Main Content */}
+      <main className="app-main">
         {children}
       </main>
 

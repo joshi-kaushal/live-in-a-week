@@ -10,9 +10,10 @@ interface WeekProps {
 export default function Week({ currentDate }: WeekProps) {
 	const getDaysOfWeek = (date: Date) => {
 		const week = [];
+		const dayOffset = date.getDay() === 0 ? 6 : date.getDay() - 1; // 0 for Mon, 1 for Tue, ..., 6 for Sun
 		for (let i = 0; i < 7; i++) {
 			const day = new Date(date);
-			day.setDate(date.getDate() - date.getDay() + i);
+			day.setDate(date.getDate() - dayOffset + i);
 			week.push(day);
 		}
 		return week;

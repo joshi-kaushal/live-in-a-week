@@ -3,12 +3,9 @@ export type KeyboardShortcut = {
   ctrl?: boolean;
   shift?: boolean;
   alt?: boolean;
-  meta?: boolean; // Cmd on Mac
+  meta?: boolean;
 };
 
-/**
- * Check if keyboard event matches a shortcut
- */
 export function matchesShortcut(event: KeyboardEvent, shortcut: KeyboardShortcut): boolean {
   return (
     event.key === shortcut.key &&
@@ -19,13 +16,7 @@ export function matchesShortcut(event: KeyboardEvent, shortcut: KeyboardShortcut
   );
 }
 
-/**
- * Prevent default if shortcut matches
- */
-export function handleShortcutDefault(
-  event: KeyboardEvent,
-  shortcut: KeyboardShortcut
-): boolean {
+export function handleShortcutDefault(event: KeyboardEvent, shortcut: KeyboardShortcut): boolean {
   if (matchesShortcut(event, shortcut)) {
     event.preventDefault();
     return true;
@@ -33,19 +24,25 @@ export function handleShortcutDefault(
   return false;
 }
 
-/**
- * Keyboard shortcuts for the app
- */
 export const SHORTCUTS = {
-  QUICK_ADD: { key: 'k', meta: true, ctrl: true } as KeyboardShortcut,        // Cmd+K (Mac) / Ctrl+K (Windows)
-  COMMAND_PALETTE: { key: 'k', shift: true, meta: true, ctrl: true } as KeyboardShortcut,  // Cmd+Shift+K / Ctrl+Shift+K
-  COMPLETE_TASK: { key: 'd', meta: true, ctrl: true } as KeyboardShortcut,     // Cmd+D / Ctrl+D
+  // Global
+  COMMAND_PALETTE: { key: 'k', ctrl: true } as KeyboardShortcut,   // Ctrl+K
+  QUICK_ADD: { key: 'k', ctrl: true, shift: true } as KeyboardShortcut, // Ctrl+Shift+K
+
+  // Navigation
+  TODAY: { key: 't' } as KeyboardShortcut,
+  PREV_WEEK: { key: 'ArrowLeft', ctrl: true } as KeyboardShortcut,
+  NEXT_WEEK: { key: 'ArrowRight', ctrl: true } as KeyboardShortcut,
+  PREV_DAY: { key: 'ArrowLeft' } as KeyboardShortcut,
+  NEXT_DAY: { key: 'ArrowRight' } as KeyboardShortcut,
+
+  // Task actions
+  NEW_TASK: { key: 'n' } as KeyboardShortcut,         // n — inline add in focused column
+  COMPLETE_TASK: { key: 'd', ctrl: true } as KeyboardShortcut,
   DELETE_TASK: { key: 'Delete' } as KeyboardShortcut,
+
+  // UI
   ESCAPE: { key: 'Escape' } as KeyboardShortcut,
   ENTER: { key: 'Enter' } as KeyboardShortcut,
-  TAB: { key: 'Tab' } as KeyboardShortcut,
-  ARROW_LEFT: { key: 'ArrowLeft' } as KeyboardShortcut,
-  ARROW_RIGHT: { key: 'ArrowRight' } as KeyboardShortcut,
-  ARROW_UP: { key: 'ArrowUp' } as KeyboardShortcut,
-  ARROW_DOWN: { key: 'ArrowDown' } as KeyboardShortcut,
+  HELP: { key: '?' } as KeyboardShortcut,              // ? — show shortcut help
 };

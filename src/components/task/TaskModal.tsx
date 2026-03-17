@@ -15,7 +15,7 @@ interface TaskModalProps {
 
 export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
   const { updateTask } = useTaskActions();
-  
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -37,7 +37,7 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!task || !title.trim()) {
       return;
     }
@@ -73,7 +73,7 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
         <DialogHeader>
           <DialogTitle>Edit Task</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
           <div>

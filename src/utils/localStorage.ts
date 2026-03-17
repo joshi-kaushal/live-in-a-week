@@ -110,7 +110,7 @@ export const getPendingTasks = (): Task[] => {
 	const tasks = getAllTasks(); // Fetch all tasks from local storage
 
 	const today = new Date();
-	const currentWeekStart = startOfWeek(today, { weekStartsOn: 0 }); // Get the start of the current week (Monday, or Sunday if week starts on Sunday)
+	const currentWeekStart = startOfWeek(today, { weekStartsOn: 1 }); // Get the start of the current week (Monday)
 
 	// Parse the due date from 'MM-dd-yyyy' format and check if it's before the start of the current week
 	return tasks.filter((task) => {

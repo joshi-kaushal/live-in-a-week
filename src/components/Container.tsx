@@ -29,30 +29,35 @@ const WeeklyCalendar = () => {
 
 			<Week currentDate={currentDate} />
 
-			<div className="flex flex-col gap-8 mt-8 lg:flex-row lg:gap-32">
+			<div className="flex flex-col gap-8 mt-8">
 				<div className="pt-2 border-t">
-					<div className="mb-2 text-sm text-gray-500">Someday</div>
-					<Input
-						className="text-sm"
-						placeholder="Add task"
-						onKeyDown={(e) => {
-							if (e.key === 'Enter') {
-								const target = e.target as HTMLInputElement;
-								addTask(target.value);
-								target.value = '';
-							}
-						}}
-					/>
-					{getSomedayTasks()?.map((task) => (
-						<TaskItem key={task.id} task={task} />
-					))}
+					<div className="mb-2 font-bold text-gray-500">Someday</div>
+					<div className="flex flex-col gap-2">
+						{getSomedayTasks()?.map((task) => (
+							<TaskItem key={task.id} task={task} />
+						))}
+						<Input
+							className="mt-2 text-sm w-full md:w-1/3"
+							placeholder="Add task"
+							onKeyDown={(e) => {
+								if (e.key === 'Enter') {
+									const target = e.target as HTMLInputElement;
+									if (target.value.trim()) {
+										addTask(target.value);
+										target.value = '';
+									}
+								}
+							}}
+						/>
+					</div>
 				</div>
 				<div className="pt-2 border-t">
-					<div className="mb-2 text-sm text-gray-500">Pending tasks</div>
-
-					{getPendingTasks()?.map((task) => (
-						<TaskItem key={task.id} task={task} />
-					))}
+					<div className="mb-2 font-bold text-gray-500">Pending tasks</div>
+					<div className="grid gap-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+						{getPendingTasks()?.map((task) => (
+							<TaskItem key={task.id} task={task} />
+						))}
+					</div>
 				</div>
 			</div>
 		</div>

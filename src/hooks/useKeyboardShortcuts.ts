@@ -4,43 +4,68 @@ import { SHORTCUTS, matchesShortcut } from '../utils/keyboard';
 interface KeyboardShortcutsConfig {
   onQuickAdd?: () => void;
   onCommandPalette?: () => void;
+  onNewTask?: () => void;        // n — inline add in focused column
+  onToday?: () => void;          // t
+  onPrevDay?: () => void;        // ←
+  onNextDay?: () => void;        // →
+  onPrevWeek?: () => void;       // Ctrl+←
+  onNextWeek?: () => void;       // Ctrl+→
   onCompleteTask?: () => void;
   onDeleteTask?: () => void;
   onEscape?: () => void;
-  onEnter?: () => void;
+  onHelp?: () => void;           // ?
 }
 
-/**
- * Hook for handling global keyboard shortcuts
- */
-export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
+export function useKeyboardShortcuts(config: KeyboardShortcutsConfig = {}) {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      // Don't trigger shortcuts while typing in input unless it's the slash command
-      const isInput = ['INPUT', 'TEXTAREA'].includes((event.target as HTMLElement).tagName);
+      const target = event.target as HTMLElement;
+      const isInput = ['INPUT', 'TEXTAREA'].includes(target.tagName);
 
-      if (matchesShortcut(event, SHORTCUTS.QUICK_ADD)) {
-        event.preventDefault();
-        config.onQuickAdd?.();
-      } else if (matchesShortcut(event, SHORTCUTS.COMMAND_PALETTE)) {
+      // Always-active shortcuts (work even in inputs)
+      if (matchesShortcut(event, SHORTCUTS.COMMAND_PALETTE)) {
         event.preventDefault();
         config.onCommandPalette?.();
-      } else if (!isInput) {
-        if (matchesShortcut(event, SHORTCUTS.COMPLETE_TASK)) {
+        return;
+      }
+      if (matchesShortcut(event, SHORTCUTS.ESCAPE)) {
+        config.onEscape?.();
+        return;
+      }
+
+      // Non-input shortcuts only
+      if (!isInput) {
+        if (matchesShortcut(event, SHORTCUTS.PREV_WEEK)) {
+          event.preventDefault();
+          config.onPrevWeek?.();
+        } else if (matchesShortcut(event, SHORTCUTS.NEXT_WEEK)) {
+          event.preventDefault();
+          config.onNextWeek?.();
+        } else if (matchesShortcut(event, SHORTCUTS.PREV_DAY)) {
+          event.preventDefault();
+          config.onPrevDay?.();
+        } else if (matchesShortcut(event, SHORTCUTS.NEXT_DAY)) {
+          event.preventDefault();
+          config.onNextDay?.();
+        } else if (matchesShortcut(event, SHORTCUTS.TODAY)) {
+          event.preventDefault();
+          config.onToday?.();
+        } else if (matchesShortcut(event, SHORTCUTS.NEW_TASK)) {
+          event.preventDefault();
+          config.onNewTask?.();
+        } else if (matchesShortcut(event, SHORTCUTS.COMPLETE_TASK)) {
           event.preventDefault();
           config.onCompleteTask?.();
         } else if (matchesShortcut(event, SHORTCUTS.DELETE_TASK)) {
           event.preventDefault();
           config.onDeleteTask?.();
-        } else if (matchesShortcut(event, SHORTCUTS.ESCAPE)) {
-          config.onEscape?.();
+        } else if (matchesShortcut(event, SHORTCUTS.HELP)) {
+          event.preventDefault();
+          config.onHelp?.();
         }
       }
-
-      if (matchesShortcut(event, SHORTCUTS.ENTER)) {
-        config.onEnter?.();
-      }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [config]
   );
 

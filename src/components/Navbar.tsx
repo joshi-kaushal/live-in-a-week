@@ -1,45 +1,60 @@
-import { ChevronLeft, ChevronRight, MoreVertical } from "lucide-react";
-import { Button } from "./ui/button";
-import { MILLISECONDS_IN_A_DAY } from "../constants";
+import { FC } from 'react';
+import { format } from 'date-fns';
+import { ChevronLeft, ChevronRight, LayoutGrid, HelpCircle } from 'lucide-react';
 
 interface NavbarProps {
-	currentDate: Date;
-	previousWeek: () => void;
-	nextWeek: () => void;
+	weekStart: Date;
+	weekEnd: Date;
+	onPrevWeek: () => void;
+	onNextWeek: () => void;
+	onToday: () => void;
+	onShowHelp: () => void;
 }
-export default function Navbar({ currentDate, previousWeek, nextWeek }: NavbarProps) {
 
-	const getWeekNumber = (date: Date): number => {
-		const startOfYear = new Date(date.getFullYear(), 0, 1);
-		const pastDaysOfYear = (date.getTime() - startOfYear.getTime()) / MILLISECONDS_IN_A_DAY;
+const Navbar: FC<NavbarProps> = ({ weekStart, weekEnd, onPrevWeek, onNextWeek, onToday, onShowHelp }) => {
+	const startLabel = format(weekStart, 'MMM d');
+	const endLabel = format(weekEnd, 'MMM d, yyyy');
+	const monthYear = format(weekStart, 'MMMM yyyy');
 
-		return Math.floor((pastDaysOfYear + startOfYear.getDay() + 1) / 7);
+	const getWeekNumber = (d: Date) => {
+		const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+		date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+		const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+		return Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 	};
 
-	const weekNumber = getWeekNumber(currentDate) + 1
 	return (
-		<div className="flex items-center justify-between mb-4">
-			<div className="flex flex-col gap-1 lg:flex-row lg:gap-4 lg:items-center">
-				<h1 className="text-2xl font-bold">
-					{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
-				</h1>
-				<p className="text-lg font-semibold text-slate-800">Week {weekNumber}</p>
+		<div className="navbar-inner">
+			{/* Left: Brand */}
+			<div className="navbar-brand">
+				<LayoutGrid className="brand-icon" />
+				<span className="brand-name">live in a week</span>
 			</div>
 
-			<div className="flex items-center space-x-2">
-				<div className="p-2 bg-purple-200 rounded-full">
-					<span className="font-bold text-purple-800">KJ</span>
+			{/* Center: Week info */}
+			<div className="navbar-center">
+				<span className="navbar-month">{monthYear}</span>
+				<span className="navbar-week-range">{startLabel} – {endLabel}</span>
+				<span className="navbar-week-num">W{getWeekNumber(weekStart)}</span>
+			</div>
+
+			{/* Right: Controls */}
+			<div className="navbar-controls">
+				<button className="nav-btn nav-btn--text" onClick={onToday} title="Go to today (t)">Today</button>
+				<div className="nav-btn-group">
+					<button className="nav-btn nav-btn--icon" onClick={onPrevWeek} aria-label="Previous week (Ctrl+←)">
+						<ChevronLeft size={16} />
+					</button>
+					<button className="nav-btn nav-btn--icon" onClick={onNextWeek} aria-label="Next week (Ctrl+→)">
+						<ChevronRight size={16} />
+					</button>
 				</div>
-				<Button variant="ghost" size="icon">
-					<MoreVertical className="w-4 h-4" />
-				</Button>
-				<Button variant="outline" size="icon" onClick={previousWeek}>
-					<ChevronLeft className="w-4 h-4" />
-				</Button>
-				<Button variant="outline" size="icon" onClick={nextWeek}>
-					<ChevronRight className="w-4 h-4" />
-				</Button>
+				<button className="nav-btn nav-btn--icon nav-btn--help" onClick={onShowHelp} aria-label="Keyboard shortcuts (?)">
+					<HelpCircle size={15} />
+				</button>
 			</div>
 		</div>
-	)
-}
+	);
+};
+
+export default Navbar;
