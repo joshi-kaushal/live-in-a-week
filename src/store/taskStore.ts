@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import { TaskStoreState, Toast } from '../types/store';
+import { TaskStoreState } from '../types/store';
 import { Task, RecurringTaskTemplate, TaskFilter } from '../types/task';
 import { calculateTaskPriority } from '../utils/priority';
 import { 
@@ -11,11 +11,7 @@ import {
 } from '../services/indexedDB';
 import { v4 as uuidv4 } from 'uuid';
 
-/**
- * Zustand store with IndexedDB persistence
- * All state mutations persist to IndexedDB automatically
- */
-export const useTaskStore = create<TaskStoreState & {
+type StoreState = TaskStoreState & {
   // Action Methods
   addTask: (title: string, dueDate?: string, energyLevel?: Task['energyLevel']) => Promise<Task>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
@@ -44,16 +40,21 @@ export const useTaskStore = create<TaskStoreState & {
   
   // Initialization
   initializeStore: () => Promise<void>;
-}>(
-  devtools(
-    persist(
+}
+/**
+ * Zustand store with IndexedDB persistence
+ * All state mutations persist to IndexedDB automatically
+ */
+export const useTaskStore = create<StoreState>()(
+  persist(
+    devtools(
       (set, get) => ({
         // Initial state
-        tasks: new Map(),
-        templates: new Map(),
+        tasks: new Map<string, Task>(),
+        templates: new Map<string, RecurringTaskTemplate>(),
         selectedTaskId: undefined,
         focusedDate: new Date().toISOString().split('T')[0],
-        currentView: 'week',
+        currentView: 'week' as const,
         commandPaletteOpen: false,
         quickAddOpen: false,
         notificationQueue: [],
@@ -67,7 +68,7 @@ export const useTaskStore = create<TaskStoreState & {
             title,
             description: '',
             status: 'pending',
-            dueDate: dueDate || null,
+            dueDate: dueDate ? dueDate : null,
             energyLevel,
             priority: calculateTaskPriority(energyLevel, dueDate),
             reminders: [],
@@ -99,16 +100,16 @@ export const useTaskStore = create<TaskStoreState & {
           const updatedTask: Task = {
             ...task,
             ...updates,
-            id: task.id,  // Ensure ID never changes
-            createdAt: task.createdAt,  // Preserve creation date
+            id: task.id,
+            createdAt: task.createdAt,
             updatedAt: new Date().toISOString(),
-            localVersion: task.localVersion + 1,
+            localVersion: (task.localVersion ?? 0) + 1,
             syncStatus: 'pending',
           };
 
           // If energy level changed and priority not manually overridden, recalculate
-          if (updates.energyLevel && !updatedTask.priorityOverride) {
-            updatedTask.priority = calculateTaskPriority(updatedTask.energyLevel, updatedTask.dueDate);
+          if (updates.energyLevel && !(updatedTask as Task & { priorityOverride?: boolean }).priorityOverride) {
+            updatedTask.priority = calculateTaskPriority(updatedTask.energyLevel, updatedTask.dueDate ?? undefined);
           }
 
           await saveTask(updatedTask);
@@ -194,7 +195,6 @@ export const useTaskStore = create<TaskStoreState & {
             createdAt: new Date().toISOString(),
           };
 
-          // TODO: Save to IndexedDB when service ready
           set((state) => {
             const newTemplates = new Map(state.templates);
             newTemplates.set(recurringTemplate.id, recurringTemplate);
@@ -217,25 +217,11 @@ export const useTaskStore = create<TaskStoreState & {
 
         // ===== UI STATE =====
 
-        setSelectedTask: (taskId?: string) => {
-          set({ selectedTaskId: taskId });
-        },
-
-        setFocusedDate: (date?: string) => {
-          set({ focusedDate: date });
-        },
-
-        setCurrentView: (view: 'week' | 'month' | 'day') => {
-          set({ currentView: view });
-        },
-
-        setCommandPaletteOpen: (open: boolean) => {
-          set({ commandPaletteOpen: open });
-        },
-
-        setQuickAddOpen: (open: boolean) => {
-          set({ quickAddOpen: open });
-        },
+        setSelectedTask: (taskId?: string) => set({ selectedTaskId: taskId }),
+        setFocusedDate: (date?: string) => set({ focusedDate: date }),
+        setCurrentView: (view: 'week' | 'month' | 'day') => set({ currentView: view }),
+        setCommandPaletteOpen: (open: boolean) => set({ commandPaletteOpen: open }),
+        setQuickAddOpen: (open: boolean) => set({ quickAddOpen: open }),
 
         // ===== NOTIFICATIONS =====
 
@@ -261,9 +247,7 @@ export const useTaskStore = create<TaskStoreState & {
 
         // ===== QUERIES =====
 
-        getTask: (taskId: string) => {
-          return get().tasks.get(taskId);
-        },
+        getTask: (taskId: string) => get().tasks.get(taskId),
 
         getTasksForDate: (date: string) => {
           return Array.from(get().tasks.values()).filter(
@@ -315,8 +299,8 @@ export const useTaskStore = create<TaskStoreState & {
               loadAllTemplates(),
             ]);
 
-            const tasksMap = new Map(tasks.map((t) => [t.id, t]));
-            const templatesMap = new Map(templates.map((t) => [t.id, t]));
+            const tasksMap = new Map<string, Task>(tasks.map((t) => [t.id, t]));
+            const templatesMap = new Map<string, RecurringTaskTemplate>(templates.map((t) => [t.id, t]));
 
             set({
               tasks: tasksMap,
@@ -328,12 +312,16 @@ export const useTaskStore = create<TaskStoreState & {
           }
         },
       }),
-      {
-        name: 'task-store',
-        // Don't persist to localStorage - we use IndexedDB
-        // But keep Zustand's subscription system
-        skipHydration: true,
-      }
-    )
+    ),
+    {
+      name: 'task-store',
+      skipHydration: true,
+      storage: {
+        getItem: () => null,
+        setItem: () => { },
+        removeItem: () => { },
+      },
+    }
   )
+
 );

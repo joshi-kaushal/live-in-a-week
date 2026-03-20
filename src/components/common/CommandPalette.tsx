@@ -2,7 +2,7 @@ import { FC, useState, useEffect, useRef, ReactNode } from 'react';
 import { useUIState, useTaskActions, useTasksForDate } from '../../store/hooks';
 import { Dialog, DialogContent } from '../ui/dialog';
 import { Input } from '../ui/input';
-import { Command, Search, Plus, CheckCircle, Trash2, Calendar as CalendarIcon } from 'lucide-react';
+import { Command, Search, Plus, CheckCircle, Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface CommandItem {
@@ -15,8 +15,8 @@ interface CommandItem {
 }
 
 export const CommandPalette: FC = () => {
-  const { commandPaletteOpen, setCommandPaletteOpen, focusedDate, setQuickAddOpen } = useUIState();
-  const { addTask, deleteTask, toggleComplete } = useTaskActions();
+  const { commandPaletteOpen, setCommandPaletteOpen, setQuickAddOpen } = useUIState();
+  const { addTask, toggleComplete } = useTaskActions();
   const todayTasks = useTasksForDate(format(new Date(), 'yyyy-MM-dd'));
   
   const [search, setSearch] = useState('');
@@ -136,7 +136,7 @@ export const CommandPalette: FC = () => {
                 <div className="px-4 py-2 text-xs font-semibold text-gray-500 bg-gray-50">
                   {group}
                 </div>
-                {items.map((cmd, index) => {
+                {items.map((cmd, _) => {
                   const globalIndex = filteredCommands.indexOf(cmd);
                   return (
                     <button
