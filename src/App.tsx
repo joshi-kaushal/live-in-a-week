@@ -78,7 +78,6 @@ function AppWithShortcuts(props: {
     setFocusedDate(format(new Date(), 'yyyy-MM-dd'));
   }, [props, setFocusedDate]);
 
-
   // Signal to WeekView to open inline add in focused column
   const [triggerNewTask, setTriggerNewTask] = useState(0);
   const handleNewTask = useCallback(() => {
@@ -92,7 +91,7 @@ function AppWithShortcuts(props: {
   }, [selectedTaskId, duplicateTask]);
 
   useKeyboardShortcuts({
-    onCommandPalette: () => { }, // handled via CommandPalette component itself
+    onCommandPalette: () => { },
     onPrevWeek: props.onPrevWeek,
     onNextWeek: props.onNextWeek,
     onPrevDay: handlePrevDay,

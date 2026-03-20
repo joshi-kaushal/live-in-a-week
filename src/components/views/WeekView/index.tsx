@@ -89,6 +89,7 @@ export const WeekView: FC<WeekViewProps> = ({ weekStart, triggerNewTask }) => {
     }
   };
 
+
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="week-view">
