@@ -8,7 +8,7 @@ import {
   deleteTaskFromDB, 
   loadAllTasks,
   loadAllTemplates 
-} from '../services/indexedDB';
+} from '../services/chromeStorage';
 import { v4 as uuidv4 } from 'uuid';
 
 type StoreState = TaskStoreState & {
