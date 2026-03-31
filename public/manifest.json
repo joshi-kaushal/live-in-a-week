@@ -9,8 +9,9 @@
   },
   "permissions": ["storage"],
   "icons": {
-    "16": "icon16.svg",
-    "48": "icon48.svg",
-    "128": "icon128.svg"
+    "16": "LiveInAWeek-16.png",
+    "24": "LiveInAWeek-24.png",
+    "32": "LiveInAWeek-32.png",
+    "48": "LiveInAWeek-48.png"
   }
 }

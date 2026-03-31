@@ -1,6 +1,6 @@
 import { FC } from 'react';
 import { format } from 'date-fns';
-import { ChevronLeft, ChevronRight, LayoutGrid, HelpCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
 
 interface NavbarProps {
 	weekStart: Date;
@@ -27,8 +27,8 @@ const Navbar: FC<NavbarProps> = ({ weekStart, weekEnd, onPrevWeek, onNextWeek, o
 		<div className="navbar-inner">
 			{/* Left: Brand */}
 			<div className="navbar-brand">
-				<LayoutGrid className="brand-icon" />
-				<span className="brand-name">live in a week</span>
+				<img src="/LiveInAWeek-24.svg" alt="Live in a week logo" width={24} height={24} />
+				<span className="brand-name">Live in a Week</span>
 			</div>
 
 			{/* Center: Week info */}
