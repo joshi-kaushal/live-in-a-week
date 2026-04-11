@@ -7,11 +7,16 @@
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
-  "permissions": ["storage"],
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications"
+  ],
   "icons": {
     "16": "LiveInAWeek-16.png",
     "24": "LiveInAWeek-24.png",
     "32": "LiveInAWeek-32.png",
-    "48": "LiveInAWeek-48.png"
+    "48": "LiveInAWeek-48.png",
+    "128": "LiveInAWeek-128.png"
   }
 }
