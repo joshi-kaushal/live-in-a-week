@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { addDays, startOfWeek, format } from 'date-fns';
 import { Layout } from './components/Layout';
 import { WeekView } from './components/views/WeekView';
@@ -7,8 +7,11 @@ import { ShortcutsHelp } from './components/common/ShortcutsHelp';
 import { useUIState } from './store/hooks';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useTaskStore } from './store/taskStore';
+import { useAuthStore } from './store/authStore';
 
 export default function App() {
+  const initialize = useAuthStore((s) => s.initialize);
+  useEffect(() => { initialize(); }, [initialize]);
   const [weekStart, setWeekStart] = useState(() =>
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
