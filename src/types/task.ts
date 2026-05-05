@@ -90,3 +90,31 @@ export interface RecurringTaskTemplate {
   reminders: Reminder[];
   createdAt: string;
 }
+
+/**
+ * Server-side Task DTO (snake_case wire format).
+ * Mirrors the shape returned by the FastAPI backend.
+ */
+export interface ServerTask {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string;
+  status: 'pending' | 'completed';
+  completed_at: string | null;
+  due_date: string | null;
+  due_time: string | null;
+  energy_level: 'low' | 'medium' | 'high';
+  priority: 'low' | 'medium' | 'high';
+  priority_override: boolean;
+  color: string | null;
+  recurrence: RecurrencePattern | null;
+  next_occurrence: string | null;
+  parent_task_id: string | null;
+  instance_date: string | null;
+  reminders: Reminder[];
+  version: number;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}

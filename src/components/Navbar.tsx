@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { ChevronLeft, ChevronRight, HelpCircle, LogOut, UserCircle2 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { LoginModal } from './auth/LoginModal';
+import { LogoutModal } from './auth/LogoutModal';
 import { formatIndianNumber } from '../services/api';
 
 interface NavbarProps {
@@ -19,10 +20,11 @@ const Navbar: FC<NavbarProps> = ({ weekStart, weekEnd, onPrevWeek, onNextWeek, o
 	const endLabel = format(weekEnd, 'MMM d, yyyy');
 	const monthYear = format(weekStart, 'MMMM yyyy');
 
-	const { token, user, logout } = useAuthStore();
+	const { token, user } = useAuthStore();
 	const isAuthenticated = !!token && !!user;
 
 	const [loginOpen, setLoginOpen] = useState(false);
+	const [logoutOpen, setLogoutOpen] = useState(false);
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -97,7 +99,7 @@ const Navbar: FC<NavbarProps> = ({ weekStart, weekEnd, onPrevWeek, onNextWeek, o
 								</div>
 								<button
 									className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-accent transition-colors text-left"
-									onClick={() => { logout(); setDropdownOpen(false); }}
+									onClick={() => { setLogoutOpen(true); setDropdownOpen(false); }}
 								>
 									<LogOut size={13} />
 									Logout
@@ -118,6 +120,7 @@ const Navbar: FC<NavbarProps> = ({ weekStart, weekEnd, onPrevWeek, onNextWeek, o
 			</div>
 
 			<LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
+			<LogoutModal open={logoutOpen} onOpenChange={setLogoutOpen} />
 		</div>
 	);
 };
