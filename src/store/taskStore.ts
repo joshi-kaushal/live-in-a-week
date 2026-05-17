@@ -3,13 +3,17 @@ import { devtools, persist } from 'zustand/middleware';
 import { TaskStoreState } from '../types/store';
 import { Task, RecurringTaskTemplate, TaskFilter } from '../types/task';
 import { calculateTaskPriority } from '../utils/priority';
-import { 
-  saveTask, 
-  deleteTaskFromDB, 
+import {
+  saveTask,
+  deleteTaskFromDB,
   loadAllTasks,
-  loadAllTemplates 
+  loadAllTemplates
 } from '../services/chromeStorage';
+import { tasksApi, ApiError } from '../services/api';
+import { useAuthStore } from './authStore';
 import { v4 as uuidv4 } from 'uuid';
+
+const isAuthed = () => !!useAuthStore.getState().token;
 
 type StoreState = TaskStoreState & {
   // Action Methods
@@ -22,6 +26,9 @@ type StoreState = TaskStoreState & {
   
   createRecurringTask: (template: Omit<RecurringTaskTemplate, 'id' | 'createdAt'>) => Promise<RecurringTaskTemplate>;
   deleteRecurringTask: (templateId: string) => Promise<void>;
+
+  onLogin: () => Promise<void>;
+  onLogout: () => Promise<void>;
   
   setSelectedTask: (taskId?: string) => void;
   setFocusedDate: (date?: string) => void;
@@ -74,18 +81,41 @@ export const useTaskStore = create<StoreState>()(
             reminders: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            syncStatus: 'pending',
+            syncStatus: isAuthed() ? 'pending' : 'synced',
             localVersion: 1,
           };
 
-          await saveTask(newTask);
-          
+          // Optimistic insert
           set((state) => {
             const newTasks = new Map(state.tasks);
             newTasks.set(newTask.id, newTask);
             return { tasks: newTasks };
           });
 
+          if (isAuthed()) {
+            try {
+              const serverTask = await tasksApi.create(newTask);
+              set((state) => {
+                const newTasks = new Map(state.tasks);
+                newTasks.set(serverTask.id, serverTask);
+                return { tasks: newTasks };
+              });
+              get().showNotification(`Task "${title}" added`, 'success', 3000);
+              return serverTask;
+            } catch (e) {
+              // Rollback
+              set((state) => {
+                const newTasks = new Map(state.tasks);
+                newTasks.delete(newTask.id);
+                return { tasks: newTasks };
+              });
+              const msg = e instanceof Error ? e.message : 'Failed to create task';
+              get().showNotification(`Couldn't save: ${msg}`, 'error', 4000);
+              throw e;
+            }
+          }
+
+          await saveTask(newTask);
           get().showNotification(`Task "${title}" added`, 'success', 3000);
           return newTask;
         },
@@ -97,45 +127,105 @@ export const useTaskStore = create<StoreState>()(
             return;
           }
 
-          const updatedTask: Task = {
+          const optimistic: Task = {
             ...task,
             ...updates,
             id: task.id,
             createdAt: task.createdAt,
             updatedAt: new Date().toISOString(),
             localVersion: (task.localVersion ?? 0) + 1,
-            syncStatus: 'pending',
+            syncStatus: isAuthed() ? 'pending' : 'synced',
           };
 
-          // If energy level changed and priority not manually overridden, recalculate
-          if (updates.energyLevel && !(updatedTask as Task & { priorityOverride?: boolean }).priorityOverride) {
-            updatedTask.priority = calculateTaskPriority(updatedTask.energyLevel, updatedTask.dueDate ?? undefined);
+          if (updates.energyLevel && !optimistic.priorityOverride) {
+            optimistic.priority = calculateTaskPriority(optimistic.energyLevel, optimistic.dueDate ?? undefined);
           }
 
-          await saveTask(updatedTask);
+          // The effective patch sent to server: caller's updates + any recalculated priority
+          const patch: Partial<Task> = { ...updates };
+          if (optimistic.priority !== task.priority) {
+            patch.priority = optimistic.priority;
+          }
 
           set((state) => {
             const newTasks = new Map(state.tasks);
-            newTasks.set(taskId, updatedTask);
+            newTasks.set(taskId, optimistic);
             return { tasks: newTasks };
           });
+
+          if (isAuthed()) {
+            try {
+              const serverTask = await tasksApi.update(taskId, patch, task.serverVersion ?? task.localVersion ?? 1);
+              set((state) => {
+                const newTasks = new Map(state.tasks);
+                newTasks.set(taskId, serverTask);
+                return { tasks: newTasks };
+              });
+            } catch (e) {
+              // Rollback
+              set((state) => {
+                const newTasks = new Map(state.tasks);
+                newTasks.set(taskId, task);
+                return { tasks: newTasks };
+              });
+              if (e instanceof ApiError && e.status === 409) {
+                get().showNotification('Task changed on another device — refreshing', 'warning', 4000);
+                try {
+                  const fresh = await tasksApi.list();
+                  const found = fresh.find((t) => t.id === taskId);
+                  if (found) {
+                    set((state) => {
+                      const newTasks = new Map(state.tasks);
+                      newTasks.set(taskId, found);
+                      return { tasks: newTasks };
+                    });
+                  }
+                } catch { /* ignore */ }
+              } else {
+                const msg = e instanceof Error ? e.message : 'Failed to update task';
+                get().showNotification(`Couldn't save: ${msg}`, 'error', 4000);
+              }
+              throw e;
+            }
+            return;
+          }
+
+          await saveTask(optimistic);
         },
 
         deleteTask: async (taskId: string) => {
           const task = get().getTask(taskId);
           if (!task) return;
 
-          await deleteTaskFromDB(taskId);
-
+          // Optimistic removal
           set((state) => {
             const newTasks = new Map(state.tasks);
             newTasks.delete(taskId);
-            return { 
+            return {
               tasks: newTasks,
               selectedTaskId: state.selectedTaskId === taskId ? undefined : state.selectedTaskId
             };
           });
 
+          if (isAuthed()) {
+            try {
+              await tasksApi.remove(taskId);
+              get().showNotification(`Task deleted`, 'success', 2000);
+            } catch (e) {
+              // Rollback
+              set((state) => {
+                const newTasks = new Map(state.tasks);
+                newTasks.set(taskId, task);
+                return { tasks: newTasks };
+              });
+              const msg = e instanceof Error ? e.message : 'Failed to delete task';
+              get().showNotification(`Couldn't delete: ${msg}`, 'error', 4000);
+              throw e;
+            }
+            return;
+          }
+
+          await deleteTaskFromDB(taskId);
           get().showNotification(`Task deleted`, 'success', 2000);
         },
 
@@ -165,10 +255,8 @@ export const useTaskStore = create<StoreState>()(
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             localVersion: 1,
-            syncStatus: 'pending',
+            syncStatus: isAuthed() ? 'pending' : 'synced',
           };
-
-          await saveTask(duplicate);
 
           set((state) => {
             const newTasks = new Map(state.tasks);
@@ -176,6 +264,29 @@ export const useTaskStore = create<StoreState>()(
             return { tasks: newTasks };
           });
 
+          if (isAuthed()) {
+            try {
+              const serverTask = await tasksApi.create(duplicate);
+              set((state) => {
+                const newTasks = new Map(state.tasks);
+                newTasks.set(serverTask.id, serverTask);
+                return { tasks: newTasks };
+              });
+              get().showNotification(`"${task.title}" duplicated`, 'success', 2500);
+              return serverTask;
+            } catch (e) {
+              set((state) => {
+                const newTasks = new Map(state.tasks);
+                newTasks.delete(duplicate.id);
+                return { tasks: newTasks };
+              });
+              const msg = e instanceof Error ? e.message : 'Failed to duplicate task';
+              get().showNotification(`Couldn't duplicate: ${msg}`, 'error', 4000);
+              throw e;
+            }
+          }
+
+          await saveTask(duplicate);
           get().showNotification(`"${task.title}" duplicated`, 'success', 2500);
           return duplicate;
         },
@@ -290,22 +401,71 @@ export const useTaskStore = create<StoreState>()(
           return results;
         },
 
+        // ===== AUTH TRANSITIONS =====
+
+        onLogin: async () => {
+          const storage = (typeof chrome !== 'undefined' && chrome.storage) ? chrome.storage.local : null;
+          const MIGRATION_KEY = 'tasks_migrated_to_server';
+
+          try {
+            const flag = storage ? await storage.get(MIGRATION_KEY) as { [k: string]: boolean } : {};
+            const alreadyMigrated = !!flag[MIGRATION_KEY];
+
+            if (!alreadyMigrated) {
+              const localTasks = await loadAllTasks();
+              if (localTasks.length > 0) {
+                const tally = await tasksApi.bulkPush(localTasks);
+                get().showNotification(
+                  `Synced ${tally.accepted} task${tally.accepted === 1 ? '' : 's'} to cloud${tally.conflicts ? ` (${tally.conflicts} conflicts)` : ''}`,
+                  'success',
+                  4000
+                );
+              }
+              if (storage) await storage.set({ [MIGRATION_KEY]: true });
+            }
+
+            // Now switch to server-as-source-of-truth
+            const tasks = await tasksApi.list();
+            const tasksMap = new Map<string, Task>(tasks.map((t) => [t.id, t]));
+            set({ tasks: tasksMap });
+          } catch (e) {
+            console.error('Login migration failed:', e);
+            const msg = e instanceof Error ? e.message : 'Unknown error';
+            get().showNotification(`Login sync failed: ${msg}`, 'error', 5000);
+          }
+        },
+
+        onLogout: async () => {
+          // Caller (logout modal) wipes chrome.storage. Here we just clear in-memory state.
+          set({
+            tasks: new Map<string, Task>(),
+            templates: new Map<string, RecurringTaskTemplate>(),
+            selectedTaskId: undefined,
+          });
+        },
+
         // ===== INITIALIZATION =====
 
         initializeStore: async () => {
           try {
-            const [tasks, templates] = await Promise.all([
-              loadAllTasks(),
-              loadAllTemplates(),
-            ]);
-
-            const tasksMap = new Map<string, Task>(tasks.map((t) => [t.id, t]));
+            const templates = await loadAllTemplates();
             const templatesMap = new Map<string, RecurringTaskTemplate>(templates.map((t) => [t.id, t]));
 
-            set({
-              tasks: tasksMap,
-              templates: templatesMap,
-            });
+            let tasks: Task[];
+            if (isAuthed()) {
+              try {
+                tasks = await tasksApi.list();
+              } catch (e) {
+                console.error('Failed to fetch tasks from server:', e);
+                get().showNotification('Could not reach server — showing cached tasks', 'warning', 4000);
+                tasks = await loadAllTasks();
+              }
+            } else {
+              tasks = await loadAllTasks();
+            }
+
+            const tasksMap = new Map<string, Task>(tasks.map((t) => [t.id, t]));
+            set({ tasks: tasksMap, templates: templatesMap });
           } catch (error) {
             console.error('Failed to initialize store:', error);
             get().showNotification('Failed to load tasks', 'error');

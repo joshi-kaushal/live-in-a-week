@@ -9,6 +9,7 @@ import {
 import { Input } from '../ui/input';
 import { requestOtp, verifyOtp, updateMe } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
+import { useTaskStore } from '../../store/taskStore';
 
 interface LoginModalProps {
   open: boolean;
@@ -21,6 +22,7 @@ const RESEND_COOLDOWN = 30;
 
 export function LoginModal({ open, onOpenChange }: LoginModalProps) {
   const login = useAuthStore((s) => s.login);
+  const onLogin = useTaskStore((s) => s.onLogin);
 
   const [step, setStep] = useState<Step>('phone');
   const [countryCode, setCountryCode] = useState('+91');
@@ -88,6 +90,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
         setStep('name');
       } else {
         await login(res.access_token, { phone_number: res.user.phone_number, display_name: res.user.display_name });
+        await onLogin();
         onOpenChange(false);
       }
     } catch (e) {
@@ -109,6 +112,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
       if (name) {
         await updateMe({ display_name: name });
       }
+      await onLogin();
       onOpenChange(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save name.');
