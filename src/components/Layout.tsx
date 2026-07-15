@@ -4,6 +4,7 @@ import { Toast } from './common/Toast';
 import { QuickAdd } from './task/QuickAdd';
 import { CommandPalette } from './common/CommandPalette';
 import { useTaskStore } from '../store/taskStore';
+import { useAuthStore } from '../store/authStore';
 
 interface LayoutProps {
   children: ReactNode;
@@ -12,10 +13,12 @@ interface LayoutProps {
 
 export const Layout: FC<LayoutProps> = ({ children, navbar }) => {
   const initializeStore = useTaskStore((state) => state.initializeStore);
+  const authLoading = useAuthStore((state) => state.isLoading);
 
   useEffect(() => {
+    if (authLoading) return;
     initializeStore();
-  }, [initializeStore]);
+  }, [authLoading, initializeStore]);
 
   useKeyboardShortcuts();
 
