@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { WeekView } from './components/views/WeekView';
 import Navbar from './components/Navbar';
 import { ShortcutsHelp } from './components/common/ShortcutsHelp';
+import { TaskModal } from './components/task/TaskModal';
 import { useUIState } from './store/hooks';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useTaskStore } from './store/taskStore';
@@ -50,7 +51,7 @@ function AppWithShortcuts(props: {
   onShowHelp: () => void;
   onHideHelp: () => void;
 }) {
-  const { focusedDate, setFocusedDate, selectedTaskId } = useUIState();
+  const { focusedDate, setFocusedDate, selectedTaskId, newTaskOpen, setNewTaskOpen } = useUIState();
   const duplicateTask = useTaskStore((state) => state.duplicateTask);
 
   const handlePrevDay = useCallback(() => {
@@ -87,6 +88,11 @@ function AppWithShortcuts(props: {
     setTriggerNewTask((n) => n + 1);
   }, []);
 
+  // Ctrl/Cmd+Enter — open the new-task modal (defaults due date to focused date)
+  const handleNewTaskModal = useCallback(() => {
+    setNewTaskOpen(true);
+  }, [setNewTaskOpen]);
+
   const handleDuplicateTask = useCallback(() => {
     if (selectedTaskId) {
       duplicateTask(selectedTaskId);
@@ -101,6 +107,7 @@ function AppWithShortcuts(props: {
     onNextDay: handleNextDay,
     onToday: handleTodayFull,
     onNewTask: handleNewTask,
+    onNewTaskModal: handleNewTaskModal,
     onDuplicateTask: handleDuplicateTask,
     onHelp: props.onShowHelp,
     onEscape: props.onHideHelp,
@@ -124,6 +131,15 @@ function AppWithShortcuts(props: {
         triggerNewTask={triggerNewTask}
       />
       {props.showHelp && <ShortcutsHelp onClose={props.onHideHelp} />}
+
+      {/* Global New Task modal — Ctrl/Cmd+Enter */}
+      <TaskModal
+        task={null}
+        mode="create"
+        isOpen={newTaskOpen}
+        onClose={() => setNewTaskOpen(false)}
+        defaultDate={focusedDate}
+      />
     </Layout>
   );
 }

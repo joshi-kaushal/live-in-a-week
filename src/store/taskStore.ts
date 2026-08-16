@@ -17,7 +17,7 @@ const isAuthed = () => !!useAuthStore.getState().token;
 
 type StoreState = TaskStoreState & {
   // Action Methods
-  addTask: (title: string, dueDate?: string, energyLevel?: Task['energyLevel']) => Promise<Task>;
+  addTask: (title: string, dueDate?: string, energyLevel?: Task['energyLevel'], estimatedDurationMinutes?: number) => Promise<Task>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
   duplicateTask: (taskId: string) => Promise<Task>;
@@ -35,6 +35,7 @@ type StoreState = TaskStoreState & {
   setCurrentView: (view: 'week' | 'month' | 'day') => void;
   setCommandPaletteOpen: (open: boolean) => void;
   setQuickAddOpen: (open: boolean) => void;
+  setNewTaskOpen: (open: boolean) => void;
   
   showNotification: (message: string, type: 'success' | 'error' | 'info' | 'warning', duration?: number) => void;
   dismissNotification: (toastId: string) => void;
@@ -64,18 +65,20 @@ export const useTaskStore = create<StoreState>()(
         currentView: 'week' as const,
         commandPaletteOpen: false,
         quickAddOpen: false,
+        newTaskOpen: false,
         notificationQueue: [],
         isSyncing: false,
 
         // ===== TASK ACTIONS =====
 
-        addTask: async (title: string, dueDate?: string, energyLevel: Task['energyLevel'] = 'medium') => {
+        addTask: async (title: string, dueDate?: string, energyLevel: Task['energyLevel'] = 'medium', estimatedDurationMinutes?: number) => {
           const newTask: Task = {
             id: uuidv4(),
             title,
             description: '',
             status: 'pending',
             dueDate: dueDate ? dueDate : null,
+            estimatedDurationMinutes,
             energyLevel,
             priority: calculateTaskPriority(energyLevel, dueDate),
             reminders: [],
@@ -333,6 +336,7 @@ export const useTaskStore = create<StoreState>()(
         setCurrentView: (view: 'week' | 'month' | 'day') => set({ currentView: view }),
         setCommandPaletteOpen: (open: boolean) => set({ commandPaletteOpen: open }),
         setQuickAddOpen: (open: boolean) => set({ quickAddOpen: open }),
+        setNewTaskOpen: (open: boolean) => set({ newTaskOpen: open }),
 
         // ===== NOTIFICATIONS =====
 

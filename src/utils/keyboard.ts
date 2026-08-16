@@ -38,6 +38,7 @@ export const SHORTCUTS = {
 
   // Task actions
   NEW_TASK: { key: 'n' } as KeyboardShortcut,         // n — inline add in focused column
+  NEW_TASK_MODAL: { key: 'Enter', ctrl: true } as KeyboardShortcut, // Ctrl+Enter — open new task modal (Cmd+Enter on Mac)
   COMPLETE_TASK: { key: 'd', ctrl: true } as KeyboardShortcut,
   DUPLICATE_TASK: { key: 'D', shift: true } as KeyboardShortcut, // Shift+D — duplicate focused task
   DELETE_TASK: { key: 'Delete' } as KeyboardShortcut,

@@ -5,6 +5,7 @@ interface KeyboardShortcutsConfig {
   onQuickAdd?: () => void;
   onCommandPalette?: () => void;
   onNewTask?: () => void;        // n — inline add in focused column
+  onNewTaskModal?: () => void;   // Ctrl/Cmd+Enter — open new task modal
   onToday?: () => void;          // t
   onPrevDay?: () => void;        // ←
   onNextDay?: () => void;        // →
@@ -27,6 +28,15 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig = {}) {
       if (matchesShortcut(event, SHORTCUTS.COMMAND_PALETTE)) {
         event.preventDefault();
         config.onCommandPalette?.();
+        return;
+      }
+      // Ctrl+Enter OR Cmd+Enter — open new task modal
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.key === SHORTCUTS.NEW_TASK_MODAL.key
+      ) {
+        event.preventDefault();
+        config.onNewTaskModal?.();
         return;
       }
       if (matchesShortcut(event, SHORTCUTS.ESCAPE)) {

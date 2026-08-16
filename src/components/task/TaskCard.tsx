@@ -2,6 +2,7 @@ import { FC } from 'react';
 import { Task } from '../../types/task';
 import { useTaskActions } from '../../store/hooks';
 import { getEnergyLevelDisplay } from '../../utils/formatters';
+import { formatMinutesAsDuration } from '../../utils/duration';
 import { Trash2, Check, Circle, Copy } from 'lucide-react';
 
 interface TaskCardProps {
@@ -75,6 +76,11 @@ export const TaskCard: FC<TaskCardProps> = ({ task, onEdit, isDragging = false }
           <span className="task-badge">{getEnergyLevelDisplay(task.energyLevel)}</span>
           {task.dueTime && (
             <span className="task-badge task-badge--time">{task.dueTime}</span>
+          )}
+          {task.estimatedDurationMinutes != null && task.estimatedDurationMinutes > 0 && (
+            <span className="task-badge task-badge--duration" title="Estimated duration">
+              ⏱ {formatMinutesAsDuration(task.estimatedDurationMinutes)}
+            </span>
           )}
         </div>
       </div>
