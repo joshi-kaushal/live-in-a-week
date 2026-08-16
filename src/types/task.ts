@@ -11,6 +11,7 @@ export interface Task {
   // Scheduling
   dueDate: string | null;               // ISO date (YYYY-MM-DD) or null
   dueTime?: string;                     // HH:mm format for reminders
+  estimatedDurationMinutes?: number;    // Optional estimated time to complete (in minutes)
   
   // Priority & Energy System
   energyLevel: 'low' | 'medium' | 'high';

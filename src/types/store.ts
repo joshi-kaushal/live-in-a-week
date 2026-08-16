@@ -14,6 +14,7 @@ export interface TaskStoreState {
   currentView: 'week' | 'month' | 'day'; // Current view mode
   commandPaletteOpen: boolean;
   quickAddOpen: boolean;
+  newTaskOpen: boolean;
   notificationQueue: Toast[];            // Pending toasts
   
   // Filter & Search

@@ -17,9 +17,16 @@ const groups = [
     {
         label: 'Tasks',
         shortcuts: [
+            { keys: ['Ctrl', 'Enter'], desc: 'New task (opens modal)' },
             { keys: ['n'], desc: 'New task in focused column' },
             { keys: ['Enter'], desc: 'Confirm task (when input is open)' },
             { keys: ['Escape'], desc: 'Cancel / close' },
+            { keys: ['Shift', '1'], desc: 'Set energy: Low (in task modal)' },
+            { keys: ['Shift', '2'], desc: 'Set energy: Medium (in task modal)' },
+            { keys: ['Shift', '3'], desc: 'Set energy: High (in task modal)' },
+            { keys: ['Shift', '4'], desc: 'Set priority: Low (in task modal)' },
+            { keys: ['Shift', '5'], desc: 'Set priority: Medium (in task modal)' },
+            { keys: ['Shift', '6'], desc: 'Set priority: High (in task modal)' },
         ],
     },
     {

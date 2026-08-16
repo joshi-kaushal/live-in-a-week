@@ -1,4 +1,4 @@
-import { FC, useState, useEffect } from 'react';
+import { FC, useState, useEffect, useCallback } from 'react';
 import { Task } from '../../types/task';
 import { useTaskActions } from '../../store/hooks';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
@@ -6,16 +6,19 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Copy } from 'lucide-react';
+import { Copy, Clock } from 'lucide-react';
+import { parseDurationToMinutes, formatMinutesAsDuration } from '../../utils/duration';
 
 interface TaskModalProps {
-  task: Task | null;
+  task: Task | null;          // null in create mode
   isOpen: boolean;
   onClose: () => void;
+  mode?: 'edit' | 'create';   // 'edit' when task is provided, 'create' otherwise
+  defaultDate?: string;       // used in create mode to prefill the due date
 }
 
-export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
-  const { updateTask, duplicateTask } = useTaskActions();
+export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose, mode = 'edit', defaultDate }) => {
+  const { updateTask, duplicateTask, addTask } = useTaskActions();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -23,10 +26,15 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
   const [dueTime, setDueTime] = useState('');
   const [energyLevel, setEnergyLevel] = useState<Task['energyLevel']>('medium');
   const [priority, setPriority] = useState<Task['priority']>('medium');
+  const [durationText, setDurationText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
 
+  const isCreateMode = mode === 'create' || !task;
+
+  // Reset form when opening (create) or switching tasks (edit)
   useEffect(() => {
+    if (!isOpen) return;
     if (task) {
       setTitle(task.title);
       setDescription(task.description || '');
@@ -34,30 +42,53 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
       setDueTime(task.dueTime || '');
       setEnergyLevel(task.energyLevel);
       setPriority(task.priority);
+      setDurationText(formatMinutesAsDuration(task.estimatedDurationMinutes));
+    } else {
+      setTitle('');
+      setDescription('');
+      setDueDate(defaultDate || '');
+      setDueTime('');
+      setEnergyLevel('medium');
+      setPriority('medium');
+      setDurationText('');
     }
-  }, [task]);
+  }, [isOpen, task, defaultDate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!title.trim()) return;
 
-    if (!task || !title.trim()) {
+    const durationMinutes = parseDurationToMinutes(durationText);
+
+    // Invalid duration text should be surfaced, not silently dropped
+    if (durationText.trim() && durationMinutes === null) {
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await updateTask(task.id, {
-        title: title.trim(),
-        description: description.trim(),
-        dueDate: dueDate || null,
-        dueTime: dueTime || undefined,
-        energyLevel,
-        priority,
-        priorityOverride: true, // User manually set priority
-      });
+      if (isCreateMode) {
+        await addTask(
+          title.trim(),
+          dueDate || undefined,
+          energyLevel,
+          durationMinutes ?? undefined
+        );
+      } else if (task) {
+        await updateTask(task.id, {
+          title: title.trim(),
+          description: description.trim(),
+          dueDate: dueDate || null,
+          dueTime: dueTime || undefined,
+          energyLevel,
+          priority,
+          priorityOverride: true, // User manually set priority
+          estimatedDurationMinutes: durationMinutes ?? undefined,
+        });
+      }
       onClose();
     } catch (error) {
-      console.error('Failed to update task:', error);
+      console.error('Failed to save task:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -78,13 +109,30 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
     }
   };
 
-  if (!task) return null;
+  // Shift+1/2/3 → Energy, Shift+4/5/6 → Priority (only while modal is open)
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!e.shiftKey) return;
+    switch (e.key) {
+      case '!': setEnergyLevel('low'); break;    // Shift+1
+      case '@': setEnergyLevel('medium'); break; // Shift+2
+      case '#': setEnergyLevel('high'); break;   // Shift+3
+      case '$': setPriority('low'); break;       // Shift+4
+      case '%': setPriority('medium'); break;    // Shift+5
+      case '^': setPriority('high'); break;      // Shift+6
+      default: return;
+    }
+    e.preventDefault();
+  }, []);
+
+  if (!isCreateMode && !task) return null;
+
+  const durationError = durationText.trim() !== '' && parseDurationToMinutes(durationText) === null;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" onKeyDown={handleKeyDown}>
         <DialogHeader>
-          <DialogTitle>Edit Task</DialogTitle>
+          <DialogTitle>{isCreateMode ? 'New Task' : 'Edit Task'}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -148,10 +196,35 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
             </div>
           </div>
 
+          {/* Estimated Duration */}
+          <div>
+            <label htmlFor="edit-duration" className="block text-sm font-medium mb-2">
+              Estimated Duration
+            </label>
+            <div className="relative">
+              <Clock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Input
+                id="edit-duration"
+                type="text"
+                placeholder="e.g. 30 min, 1 hour, 1h 30m"
+                value={durationText}
+                onChange={(e) => setDurationText(e.target.value)}
+                disabled={isSubmitting}
+                className="pl-9"
+                aria-invalid={durationError ? true : undefined}
+              />
+            </div>
+            {durationError && (
+              <p className="mt-1 text-xs text-red-600">
+                Invalid duration. Try something like “30 min” or “1 hour”.
+              </p>
+            )}
+          </div>
+
           {/* Energy Level */}
           <div>
             <label htmlFor="edit-energy" className="block text-sm font-medium mb-2">
-              Energy Level
+              Energy Level <span className="text-xs text-gray-400">(Shift+1/2/3)</span>
             </label>
             <Select
               value={energyLevel}
@@ -162,9 +235,9 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
                 <SelectValue placeholder="Select energy level" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="low">🔋 Low Energy</SelectItem>
-                <SelectItem value="medium">⚡ Medium Energy</SelectItem>
-                <SelectItem value="high">🚀 High Energy</SelectItem>
+                <SelectItem value="low">🔋 Low Energy (Shift+1)</SelectItem>
+                <SelectItem value="medium">⚡ Medium Energy (Shift+2)</SelectItem>
+                <SelectItem value="high">🚀 High Energy (Shift+3)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -172,7 +245,7 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
           {/* Priority */}
           <div>
             <label htmlFor="edit-priority" className="block text-sm font-medium mb-2">
-              Priority
+              Priority <span className="text-xs text-gray-400">(Shift+4/5/6)</span>
             </label>
             <Select
               value={priority}
@@ -183,15 +256,15 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
                 <SelectValue placeholder="Select priority" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="low">🟢 Low Priority</SelectItem>
-                <SelectItem value="medium">🟡 Medium Priority</SelectItem>
-                <SelectItem value="high">🔴 High Priority</SelectItem>
+                <SelectItem value="low">🟢 Low Priority (Shift+4)</SelectItem>
+                <SelectItem value="medium">🟡 Medium Priority (Shift+5)</SelectItem>
+                <SelectItem value="high">🔴 High Priority (Shift+6)</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Status Info */}
-          {task.completedAt && (
+          {!isCreateMode && task?.completedAt && (
             <div className="p-3 bg-green-50 border border-green-200 rounded-md">
               <p className="text-sm text-green-800">
                 ✓ Completed on {new Date(task.completedAt).toLocaleDateString()}
@@ -210,22 +283,26 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose }) => {
               >
                 Cancel
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleDuplicate}
-                disabled={isSubmitting || isDuplicating}
-                title="Duplicate this task (Shift+D)"
-              >
-                <Copy size={14} className="mr-1.5" />
-                {isDuplicating ? 'Duplicating…' : 'Duplicate'}
-              </Button>
+              {!isCreateMode && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleDuplicate}
+                  disabled={isSubmitting || isDuplicating}
+                  title="Duplicate this task (Shift+D)"
+                >
+                  <Copy size={14} className="mr-1.5" />
+                  {isDuplicating ? 'Duplicating…' : 'Duplicate'}
+                </Button>
+              )}
             </div>
             <Button
               type="submit"
-              disabled={!title.trim() || isSubmitting || isDuplicating}
+              disabled={!title.trim() || isSubmitting || isDuplicating || durationError}
             >
-              {isSubmitting ? 'Saving...' : 'Save Changes'}
+              {isCreateMode
+                ? (isSubmitting ? 'Adding...' : 'Add Task')
+                : (isSubmitting ? 'Saving...' : 'Save Changes')}
             </Button>
           </div>
         </form>

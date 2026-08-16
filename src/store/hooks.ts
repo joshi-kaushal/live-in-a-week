@@ -126,6 +126,8 @@ export const useUIState = () => {
   const setCommandPaletteOpen = useTaskStore((state) => state.setCommandPaletteOpen);
   const quickAddOpen = useTaskStore((state) => state.quickAddOpen);
   const setQuickAddOpen = useTaskStore((state) => state.setQuickAddOpen);
+  const newTaskOpen = useTaskStore((state) => state.newTaskOpen);
+  const setNewTaskOpen = useTaskStore((state) => state.setNewTaskOpen);
 
   return useMemo(
     () => ({
@@ -139,6 +141,8 @@ export const useUIState = () => {
       setCommandPaletteOpen,
       quickAddOpen,
       setQuickAddOpen,
+      newTaskOpen,
+      setNewTaskOpen,
     }),
     [
       selectedTaskId,
@@ -151,6 +155,8 @@ export const useUIState = () => {
       setCommandPaletteOpen,
       quickAddOpen,
       setQuickAddOpen,
+      newTaskOpen,
+      setNewTaskOpen,
     ]
   );
 };
