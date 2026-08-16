@@ -1,6 +1,6 @@
 import { FC, useState, useEffect, useRef, ReactNode } from 'react';
 import { useUIState, useTaskActions, useTasksForDate } from '../../store/hooks';
-import { Dialog, DialogContent } from '../ui/dialog';
+import { Dialog, DialogContent, DialogDescription } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Command, Search, Plus, CheckCircle, Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
@@ -104,6 +104,10 @@ export const CommandPalette: FC = () => {
   return (
     <Dialog open={commandPaletteOpen} onOpenChange={setCommandPaletteOpen}>
       <DialogContent className="sm:max-w-2xl p-0 overflow-hidden">
+        {/* Visually hidden description for screen readers */}
+        <DialogDescription className="sr-only">
+          Search commands or jump to tasks.
+        </DialogDescription>
         {/* Search Input */}
         <div className="flex items-center gap-2 p-4 border-b">
           <Search className="w-5 h-5 text-gray-400" />
@@ -136,7 +140,7 @@ export const CommandPalette: FC = () => {
                 <div className="px-4 py-2 text-xs font-semibold text-gray-500 bg-gray-50">
                   {group}
                 </div>
-                {items.map((cmd, _) => {
+                {items.map((cmd) => {
                   const globalIndex = filteredCommands.indexOf(cmd);
                   return (
                     <button

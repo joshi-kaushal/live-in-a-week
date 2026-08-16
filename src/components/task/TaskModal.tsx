@@ -1,7 +1,7 @@
 import { FC, useState, useEffect, useCallback } from 'react';
 import { Task } from '../../types/task';
 import { useTaskActions } from '../../store/hooks';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
@@ -15,9 +15,10 @@ interface TaskModalProps {
   onClose: () => void;
   mode?: 'edit' | 'create';   // 'edit' when task is provided, 'create' otherwise
   defaultDate?: string;       // used in create mode to prefill the due date
+  defaultTitle?: string;      // used in create mode to prefill the title
 }
 
-export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose, mode = 'edit', defaultDate }) => {
+export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose, mode = 'edit', defaultDate, defaultTitle }) => {
   const { updateTask, duplicateTask, addTask } = useTaskActions();
 
   const [title, setTitle] = useState('');
@@ -44,7 +45,7 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose, mode = 'e
       setPriority(task.priority);
       setDurationText(formatMinutesAsDuration(task.estimatedDurationMinutes));
     } else {
-      setTitle('');
+      setTitle(defaultTitle || '');
       setDescription('');
       setDueDate(defaultDate || '');
       setDueTime('');
@@ -52,14 +53,13 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose, mode = 'e
       setPriority('medium');
       setDurationText('');
     }
-  }, [isOpen, task, defaultDate]);
+  }, [isOpen, task, defaultDate, defaultTitle]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
     const durationMinutes = parseDurationToMinutes(durationText);
-
     // Invalid duration text should be surfaced, not silently dropped
     if (durationText.trim() && durationMinutes === null) {
       return;
@@ -133,12 +133,15 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose, mode = 'e
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" onKeyDown={handleKeyDown}>
         <DialogHeader>
           <DialogTitle>{isCreateMode ? 'New Task' : 'Edit Task'}</DialogTitle>
+          <DialogDescription>
+            {isCreateMode ? 'Add a new task to your week.' : `Edit "${title}"`}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
           <div>
-            <label htmlFor="edit-title" className="block text-sm font-medium mb-2">
+            <label htmlFor="edit-title" className="block mb-2 text-sm font-medium">
               Task Title *
             </label>
             <Input
@@ -155,7 +158,7 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose, mode = 'e
 
           {/* Description */}
           <div>
-            <label htmlFor="edit-description" className="block text-sm font-medium mb-2">
+            <label htmlFor="edit-description" className="block mb-2 text-sm font-medium">
               Description
             </label>
             <Textarea
@@ -171,7 +174,7 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose, mode = 'e
           {/* Due Date & Time */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="edit-date" className="block text-sm font-medium mb-2">
+              <label htmlFor="edit-date" className="block mb-2 text-sm font-medium">
                 Due Date
               </label>
               <Input
@@ -183,7 +186,7 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose, mode = 'e
               />
             </div>
             <div>
-              <label htmlFor="edit-time" className="block text-sm font-medium mb-2">
+              <label htmlFor="edit-time" className="block mb-2 text-sm font-medium">
                 Due Time
               </label>
               <Input
@@ -198,11 +201,11 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose, mode = 'e
 
           {/* Estimated Duration */}
           <div>
-            <label htmlFor="edit-duration" className="block text-sm font-medium mb-2">
+            <label htmlFor="edit-duration" className="block mb-2 text-sm font-medium">
               Estimated Duration
             </label>
             <div className="relative">
-              <Clock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Clock size={14} className="absolute text-gray-400 -translate-y-1/2 left-3 top-1/2" />
               <Input
                 id="edit-duration"
                 type="text"
@@ -223,7 +226,7 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose, mode = 'e
 
           {/* Energy Level */}
           <div>
-            <label htmlFor="edit-energy" className="block text-sm font-medium mb-2">
+            <label htmlFor="edit-energy" className="block mb-2 text-sm font-medium">
               Energy Level <span className="text-xs text-gray-400">(Shift+1/2/3)</span>
             </label>
             <Select
@@ -244,7 +247,7 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose, mode = 'e
 
           {/* Priority */}
           <div>
-            <label htmlFor="edit-priority" className="block text-sm font-medium mb-2">
+            <label htmlFor="edit-priority" className="block mb-2 text-sm font-medium">
               Priority <span className="text-xs text-gray-400">(Shift+4/5/6)</span>
             </label>
             <Select
@@ -265,7 +268,7 @@ export const TaskModal: FC<TaskModalProps> = ({ task, isOpen, onClose, mode = 'e
 
           {/* Status Info */}
           {!isCreateMode && task?.completedAt && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+            <div className="p-3 border border-green-200 rounded-md bg-green-50">
               <p className="text-sm text-green-800">
                 ✓ Completed on {new Date(task.completedAt).toLocaleDateString()}
               </p>

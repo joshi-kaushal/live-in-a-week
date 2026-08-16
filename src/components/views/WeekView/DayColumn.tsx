@@ -24,6 +24,7 @@ export const DayColumn: FC<DayColumnProps> = ({
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [draftTitle, setDraftTitle] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { addTask } = useTaskActions();
 
@@ -61,7 +62,15 @@ export const DayColumn: FC<DayColumnProps> = ({
   };
 
   const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') { await handleSubmit(); }
+    // Ctrl/Cmd+Enter — open the draft in the task modal instead of creating immediately
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      if (inputValue.trim()) {
+        setDraftTitle(inputValue.trim());
+        setIsAdding(false);
+        setInputValue('');
+      }
+    } else if (e.key === 'Enter') { await handleSubmit(); }
     else if (e.key === 'Escape') { setIsAdding(false); setInputValue(''); }
   };
 
@@ -119,7 +128,14 @@ export const DayColumn: FC<DayColumnProps> = ({
         )}
       </div>
 
-      <TaskModal task={selectedTask} isOpen={selectedTask !== null} onClose={() => setSelectedTask(null)} />
+      <TaskModal
+        task={selectedTask}
+        isOpen={selectedTask !== null || draftTitle !== null}
+        onClose={() => { setSelectedTask(null); setDraftTitle(null); }}
+        mode={selectedTask ? 'edit' : 'create'}
+        defaultDate={dateStr}
+        defaultTitle={draftTitle ?? undefined}
+      />
     </>
   );
 };

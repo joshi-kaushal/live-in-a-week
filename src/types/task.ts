@@ -105,6 +105,7 @@ export interface ServerTask {
   completed_at: string | null;
   due_date: string | null;
   due_time: string | null;
+  estimated_duration_minutes: number | null;
   energy_level: 'low' | 'medium' | 'high';
   priority: 'low' | 'medium' | 'high';
   priority_override: boolean;

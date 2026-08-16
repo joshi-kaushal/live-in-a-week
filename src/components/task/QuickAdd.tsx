@@ -1,6 +1,6 @@
 import { FC, useState, useEffect, useRef } from 'react';
 import { useTaskActions, useUIState } from '../../store/hooks';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { formatDateForInput } from '../../utils/date';
@@ -54,6 +54,7 @@ export const QuickAdd: FC = () => {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Quick Add Task</DialogTitle>
+          <DialogDescription>Quickly add a task with a title and optional due date.</DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">

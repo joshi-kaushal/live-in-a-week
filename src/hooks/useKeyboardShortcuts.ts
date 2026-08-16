@@ -30,8 +30,9 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig = {}) {
         config.onCommandPalette?.();
         return;
       }
-      // Ctrl+Enter OR Cmd+Enter — open new task modal
+      // Ctrl+Enter OR Cmd+Enter — open new task modalDialogDescription
       if (
+        !isInput &&
         (event.ctrlKey || event.metaKey) &&
         event.key === SHORTCUTS.NEW_TASK_MODAL.key
       ) {
